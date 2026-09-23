@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "list_version": "2026-08-07.v1",
+  "reviewed_at": "2026-08-07",
+  "policy": {
+    "purpose": "Prioritize review and full-text acquisition; never determine variant validity or novelty.",
+    "default_tier": "C",
+    "tier_scores": {
+      "A": 30,
+      "B": 20,
+      "C": 5,
+      "WATCH": 0
+    },
+    "fulltext_bonus": 5
+  },
+  "journals": [
+    {
+      "canonical_name": "Nature",
+      "aliases": ["Nature"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["general"],
+      "reason": "high-impact general journal"
+    },
+    {
+      "canonical_name": "Science",
+      "aliases": ["Science"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["general"],
+      "reason": "high-impact general journal"
+    },
+    {
+      "canonical_name": "Cell",
+      "aliases": ["Cell"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["general", "molecular_biology"],
+      "reason": "high-impact general biomedical journal"
+    },
+    {
+      "canonical_name": "New England Journal of Medicine",
+      "aliases": ["N Engl J Med", "The New England journal of medicine"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["general_medicine"],
+      "reason": "high-impact general medical journal"
+    },
+    {
+      "canonical_name": "The Lancet",
+      "aliases": ["Lancet", "The Lancet"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["general_medicine"],
+      "reason": "high-impact general medical journal"
+    },
+    {
+      "canonical_name": "JAMA",
+      "aliases": ["JAMA"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["general_medicine"],
+      "reason": "high-impact general medical journal"
+    },
+    {
+      "canonical_name": "Nature Genetics",
+      "aliases": ["Nat Genet", "Nature genetics"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["human_genetics", "genomics"],
+      "reason": "top genetics journal"
+    },
+    {
+      "canonical_name": "American Journal of Human Genetics",
+      "aliases": ["Am J Hum Genet", "The American Journal of Human Genetics"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["human_genetics", "rare_disease"],
+      "reason": "core human genetics journal"
+    },
+    {
+      "canonical_name": "Genetics in Medicine",
+      "aliases": ["Genet Med", "Genetics in medicine"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["clinical_genetics", "variant_interpretation"],
+      "reason": "core clinical genetics journal"
+    },
+    {
+      "canonical_name": "Genome Medicine",
+      "aliases": ["Genome Med", "Genome medicine"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["genomics", "precision_medicine"],
+      "reason": "high-impact translational genomics journal"
+    },
+    {
+      "canonical_name": "Genome Biology",
+      "aliases": ["Genome Biol", "Genome biology"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["genomics"],
+      "reason": "high-impact genomics journal"
+    },
+    {
+      "canonical_name": "Nature Medicine",
+      "aliases": ["Nat Med", "Nature medicine"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["translational_medicine"],
+      "reason": "high-impact translational medical journal"
+    },
+    {
+      "canonical_name": "Nature Communications",
+      "aliases": ["Nat Commun", "Nature communications"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["general", "genomics"],
+      "reason": "high-impact multidisciplinary journal"
+    },
+    {
+      "canonical_name": "Science Translational Medicine",
+      "aliases": ["Sci Transl Med", "Science translational medicine"],
+      "issns": [],
+      "tier": "A",
+      "domains": ["translational_medicine"],
+      "reason": "high-impact translational journal"
+    },
+    {
+      "canonical_name": "Journal of Medical Genetics",
+      "aliases": ["J Med Genet", "Journal of medical genetics"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["clinical_genetics", "rare_disease"],
+      "reason": "core medical genetics journal"
+    },
+    {
+      "canonical_name": "Clinical Genetics",
+      "aliases": ["Clin Genet", "Clinical genetics"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["clinical_genetics", "rare_disease"],
+      "reason": "core clinical genetics journal"
+    },
+    {
+      "canonical_name": "Human Mutation",
+      "aliases": ["Hum Mutat", "Human mutation"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["human_genetics", "variant_interpretation"],
+      "reason": "core human variant journal"
+    },
+    {
+      "canonical_name": "Human Genetics and Genomics Advances",
+      "aliases": ["HGG Adv", "Human Genetics and Genomics Advances"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["human_genetics", "genomics"],
+      "reason": "human genetics and genomics field journal"
+    },
+    {
+      "canonical_name": "Human Molecular Genetics",
+      "aliases": ["Hum Mol Genet", "Human molecular genetics"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["human_genetics", "molecular_genetics"],
+      "reason": "high-quality molecular genetics journal"
+    },
+    {
+      "canonical_name": "European Journal of Human Genetics",
+      "aliases": ["Eur J Hum Genet", "European journal of human genetics"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["human_genetics", "clinical_genetics"],
+      "reason": "core human genetics journal"
+    },
+    {
+      "canonical_name": "American Journal of Medical Genetics Part A",
+      "aliases": ["Am J Med Genet A", "American journal of medical genetics. Part A"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["clinical_genetics", "rare_disease"],
+      "reason": "major dysmorphology and rare-disease journal"
+    },
+    {
+      "canonical_name": "Molecular Genetics & Genomic Medicine",
+      "aliases": ["Mol Genet Genomic Med", "Molecular genetics & genomic medicine"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["clinical_genomics", "rare_disease"],
+      "reason": "clinical genomics field journal"
+    },
+    {
+      "canonical_name": "Orphanet Journal of Rare Diseases",
+      "aliases": ["Orphanet J Rare Dis", "Orphanet journal of rare diseases"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["rare_disease", "clinical_genetics"],
+      "reason": "core rare-disease journal"
+    },
+    {
+      "canonical_name": "Journal of Inherited Metabolic Disease",
+      "aliases": ["J Inherit Metab Dis", "Journal of inherited metabolic disease"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["metabolic_genetics", "rare_disease"],
+      "reason": "core inherited metabolic disease journal"
+    },
+    {
+      "canonical_name": "Neurology Genetics",
+      "aliases": ["Neurol Genet", "Neurology genetics"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["neurogenetics"],
+      "reason": "core neurogenetics journal"
+    },
+    {
+      "canonical_name": "Brain",
+      "aliases": ["Brain"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["neurology", "neurogenetics"],
+      "reason": "high-impact neurology journal"
+    },
+    {
+      "canonical_name": "Epilepsia",
+      "aliases": ["Epilepsia"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["neurology", "epilepsy_genetics"],
+      "reason": "core epilepsy journal"
+    },
+    {
+      "canonical_name": "Circulation: Genomic and Precision Medicine",
+      "aliases": ["Circ Genom Precis Med", "Circulation. Genomic and precision medicine"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["cardiovascular_genetics"],
+      "reason": "core cardiovascular genetics journal"
+    },
+    {
+      "canonical_name": "Blood",
+      "aliases": ["Blood"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["hematology", "hematologic_genetics"],
+      "reason": "high-impact hematology journal"
+    },
+    {
+      "canonical_name": "Leukemia",
+      "aliases": ["Leukemia"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["hematology", "cancer_genetics"],
+      "reason": "high-impact hematologic malignancy journal"
+    },
+    {
+      "canonical_name": "Cancer Discovery",
+      "aliases": ["Cancer Discov", "Cancer discovery"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["cancer_genetics", "oncology"],
+      "reason": "high-impact cancer research journal"
+    },
+    {
+      "canonical_name": "Journal of Clinical Oncology",
+      "aliases": ["J Clin Oncol", "Journal of clinical oncology"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["oncology", "cancer_genetics"],
+      "reason": "high-impact clinical oncology journal"
+    },
+    {
+      "canonical_name": "The Journal of Clinical Endocrinology & Metabolism",
+      "aliases": ["J Clin Endocrinol Metab", "The Journal of clinical endocrinology and metabolism"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["endocrinology", "metabolic_genetics"],
+      "reason": "core clinical endocrinology journal"
+    },
+    {
+      "canonical_name": "Diabetes",
+      "aliases": ["Diabetes"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["diabetes", "metabolic_genetics"],
+      "reason": "high-impact diabetes journal"
+    },
+    {
+      "canonical_name": "EBioMedicine",
+      "aliases": ["EBioMedicine"],
+      "issns": [],
+      "tier": "B",
+      "domains": ["translational_medicine", "genomics"],
+      "reason": "high-quality translational biomedical journal"
+    }
+  ]
+}

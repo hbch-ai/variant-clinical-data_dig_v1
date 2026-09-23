@@ -1,0 +1,50 @@
+{
+  "email": "variant_clinical_v3@local.genos",
+  "tool": "variant_clinical_v3_pipeline",
+  "restored_from": "data/pubmed/ref/queries/queries_used.json",
+  "restored_note": "Original configs/queries.json existed at Stage0 preflight 2026-08-07 (9622 bytes) and was later removed with pubmed_pipeline.py. Query terms below are the exact snapshot written by Stage1.",
+  "queries": [
+    {
+      "id": "q1_core_gpc",
+      "priority": 1,
+      "label": "Core genotype-phenotype / clinical spectrum",
+      "term": "(\"genotype phenotype correlation\"[Title/Abstract] OR \"genotype-phenotype\"[Title/Abstract] OR \"genotype phenotype\"[Title/Abstract] OR \"phenotypic spectrum\"[Title/Abstract] OR \"phenotype spectrum\"[Title/Abstract] OR \"phenotypic heterogeneity\"[Title/Abstract] OR \"clinical spectrum\"[Title/Abstract] OR \"clinical phenotype\"[Title/Abstract] OR \"clinical phenotypes\"[Title/Abstract] OR \"clinical manifestation\"[Title/Abstract] OR \"clinical manifestations\"[Title/Abstract] OR \"clinical presentation\"[Title/Abstract] OR \"clinical presentations\"[Title/Abstract] OR \"clinical features\"[Title/Abstract] OR \"phenotype-genotype\"[Title/Abstract]) AND (variant[Title/Abstract] OR variants[Title/Abstract] OR mutation[Title/Abstract] OR mutations[Title/Abstract] OR \"pathogenic variant\"[Title/Abstract] OR \"pathogenic variants\"[Title/Abstract] OR \"likely pathogenic\"[Title/Abstract] OR \"loss of function\"[Title/Abstract] OR \"loss-of-function\"[Title/Abstract] OR missense[Title/Abstract] OR nonsense[Title/Abstract] OR frameshift[Title/Abstract] OR splicing[Title/Abstract] OR \"copy number\"[Title/Abstract] OR CNV[Title/Abstract] OR CNVs[Title/Abstract] OR SNV[Title/Abstract] OR SNVs[Title/Abstract] OR indel[Title/Abstract] OR indels[Title/Abstract] OR \"structural variant\"[Title/Abstract] OR \"structural variants\"[Title/Abstract] OR \"de novo\"[Title/Abstract]) AND humans[MeSH Terms] AND (\"2026/01/01\"[Date - Publication] : \"3000\"[Date - Publication])"
+    },
+    {
+      "id": "q3_case_reports",
+      "priority": 1,
+      "label": "Case/family reports with pathogenic variants",
+      "term": "(\"Case Reports\"[Publication Type] OR \"case report\"[Title/Abstract] OR \"case reports\"[Title/Abstract] OR \"case series\"[Title/Abstract] OR pedigree[Title/Abstract] OR pedigrees[Title/Abstract] OR \"family study\"[Title/Abstract] OR \"familial\"[Title/Abstract] OR \"affected individual\"[Title/Abstract] OR \"affected individuals\"[Title/Abstract] OR \"index patient\"[Title/Abstract] OR \"proband\"[Title/Abstract] OR \"probands\"[Title/Abstract]) AND (\"pathogenic variant\"[Title/Abstract] OR \"pathogenic variants\"[Title/Abstract] OR \"likely pathogenic\"[Title/Abstract] OR \"novel variant\"[Title/Abstract] OR \"novel variants\"[Title/Abstract] OR \"novel mutation\"[Title/Abstract] OR \"novel mutations\"[Title/Abstract] OR \"de novo variant\"[Title/Abstract] OR \"de novo mutation\"[Title/Abstract] OR \"compound heterozygous\"[Title/Abstract] OR homozygous[Title/Abstract] OR heterozygous[Title/Abstract] OR biallelic[Title/Abstract] OR \"loss-of-function\"[Title/Abstract] OR \"loss of function\"[Title/Abstract]) AND (phenotype[Title/Abstract] OR phenotypic[Title/Abstract] OR \"clinical features\"[Title/Abstract] OR \"clinical manifestation\"[Title/Abstract] OR \"clinical manifestations\"[Title/Abstract] OR \"clinical presentation\"[Title/Abstract] OR \"presenting with\"[Title/Abstract] OR \"presented with\"[Title/Abstract] OR \"characterized by\"[Title/Abstract]) AND humans[MeSH Terms] AND (\"2026/01/01\"[Date - Publication] : \"3000\"[Date - Publication])"
+    },
+    {
+      "id": "q2_high_recall",
+      "priority": 2,
+      "label": "High-recall variant + clinical phenotype",
+      "term": "(variant[Title/Abstract] OR variants[Title/Abstract] OR mutation[Title/Abstract] OR mutations[Title/Abstract] OR \"genetic variant\"[Title/Abstract] OR \"genetic variants\"[Title/Abstract] OR \"sequence variant\"[Title/Abstract] OR \"sequence variants\"[Title/Abstract] OR \"genomic variant\"[Title/Abstract] OR \"genomic variants\"[Title/Abstract] OR \"pathogenic variant\"[Title/Abstract] OR \"pathogenic variants\"[Title/Abstract] OR \"likely pathogenic\"[Title/Abstract] OR \"variant of uncertain significance\"[Title/Abstract] OR VUS[Title/Abstract] OR HGVS[Title/Abstract] OR \"amino acid substitution\"[Title/Abstract]) AND (phenotype[Title/Abstract] OR phenotypes[Title/Abstract] OR phenotypic[Title/Abstract] OR \"clinical feature\"[Title/Abstract] OR \"clinical features\"[Title/Abstract] OR \"clinical finding\"[Title/Abstract] OR \"clinical findings\"[Title/Abstract] OR \"clinical manifestation\"[Title/Abstract] OR \"clinical manifestations\"[Title/Abstract] OR \"clinical presentation\"[Title/Abstract] OR \"clinical presentations\"[Title/Abstract] OR \"clinical phenotype\"[Title/Abstract] OR symptom[Title/Abstract] OR symptoms[Title/Abstract] OR \"Human Phenotype Ontology\"[Title/Abstract] OR HPO[Title/Abstract]) AND (\"genetic disease\"[Title/Abstract] OR \"genetic disorder\"[Title/Abstract] OR \"genetic disorders\"[Title/Abstract] OR \"inherited\"[Title/Abstract] OR Mendelian[Title/Abstract] OR \"rare disease\"[Title/Abstract] OR \"rare diseases\"[Title/Abstract] OR syndrome[Title/Abstract] OR syndromic[Title/Abstract] OR \"developmental disorder\"[Title/Abstract] OR \"neurodevelopmental\"[Title/Abstract] OR cardiomyopathy[Title/Abstract] OR epilepsy[Title/Abstract] OR \"intellectual disability\"[Title/Abstract]) AND humans[MeSH Terms] AND (\"2026/01/01\"[Date - Publication] : \"3000\"[Date - Publication])"
+    },
+    {
+      "id": "q4_mesh",
+      "priority": 2,
+      "label": "MeSH genetic variation + phenotype",
+      "term": "(\"Genetic Variation\"[MeSH Terms] OR \"Mutation\"[MeSH Terms] OR \"Polymorphism, Single Nucleotide\"[MeSH Terms] OR \"DNA Copy Number Variations\"[MeSH Terms] OR \"Genomic Structural Variation\"[MeSH Terms] OR \"Alleles\"[MeSH Terms]) AND (\"Phenotype\"[MeSH Terms] OR \"Genotype\"[MeSH Terms] OR \"Genetic Diseases, Inborn\"[MeSH Terms] OR \"Rare Diseases\"[MeSH Terms] OR \"Congenital Abnormalities\"[MeSH Terms]) AND (\"Genetic Association Studies\"[MeSH Terms] OR \"Genetic Testing\"[MeSH Terms] OR \"Whole Genome Sequencing\"[MeSH Terms] OR \"Whole Exome Sequencing\"[MeSH Terms] OR \"High-Throughput Nucleotide Sequencing\"[MeSH Terms] OR \"Molecular Diagnostic Techniques\"[MeSH Terms]) AND humans[MeSH Terms] AND (\"2026/01/01\"[Date - Publication] : \"3000\"[Date - Publication])"
+    },
+    {
+      "id": "q5_clinical_genetics",
+      "priority": 3,
+      "label": "Optional clinical genetics / variant interpretation",
+      "term": "(\"genetic variant\"[Title/Abstract] OR \"genetic variants\"[Title/Abstract] OR \"pathogenic variant\"[Title/Abstract] OR mutation[Title/Abstract] OR mutations[Title/Abstract]) AND (diagnosis[Title/Abstract] OR diagnostic[Title/Abstract] OR \"clinical genetics\"[Title/Abstract] OR \"medical genetics\"[Title/Abstract] OR \"molecular diagnosis\"[Title/Abstract] OR \"molecular genetic\"[Title/Abstract] OR \"variant interpretation\"[Title/Abstract] OR ACMG[Title/Abstract]) AND humans[MeSH Terms] AND (\"2026/01/01\"[Date - Publication] : \"3000\"[Date - Publication])"
+    },
+    {
+      "id": "q6_rsid_trait",
+      "priority": 2,
+      "label": "rsID/SNP/GWAS + phenotype/trait (population association)",
+      "term": "(SNP[Title/Abstract] OR SNPs[Title/Abstract] OR \"single nucleotide polymorphism\"[Title/Abstract] OR \"single-nucleotide polymorphism\"[Title/Abstract] OR dbSNP[Title/Abstract] OR \"genetic variant\"[Title/Abstract] OR \"genetic variants\"[Title/Abstract] OR \"common variant\"[Title/Abstract] OR \"common variants\"[Title/Abstract] OR GWAS[Title/Abstract] OR \"genome-wide association\"[Title/Abstract] OR \"genome wide association\"[Title/Abstract] OR \"genetic variation\"[Title/Abstract] OR polymorphism[Title/Abstract] OR polymorphisms[Title/Abstract]) AND (phenotype[Title/Abstract] OR phenotypes[Title/Abstract] OR phenotypic[Title/Abstract] OR trait[Title/Abstract] OR traits[Title/Abstract] OR \"quantitative trait\"[Title/Abstract] OR QTL[Title/Abstract] OR \"blood count\"[Title/Abstract] OR anthropometric[Title/Abstract] OR \"disease risk\"[Title/Abstract] OR \"disease susceptibility\"[Title/Abstract] OR \"associated with\"[Title/Abstract] OR association[Title/Abstract] OR associations[Title/Abstract]) AND humans[MeSH Terms] AND (\"2026/01/01\"[Date - Publication] : \"3000\"[Date - Publication])"
+    },
+    {
+      "id": "q7_intergenic_regulatory",
+      "priority": 2,
+      "label": "Intergenic / enhancer / regulatory variants × phenotype (bypass track)",
+      "term": "(intergenic[Title/Abstract] OR enhancer[Title/Abstract] OR enhancers[Title/Abstract] OR \"regulatory variant\"[Title/Abstract] OR \"regulatory variants\"[Title/Abstract] OR \"regulatory SNP\"[Title/Abstract] OR \"noncoding regulatory\"[Title/Abstract] OR \"non-coding regulatory\"[Title/Abstract] OR insulator[Title/Abstract] OR \"upstream of\"[Title/Abstract] OR \"downstream of\"[Title/Abstract]) AND (variant[Title/Abstract] OR variants[Title/Abstract] OR SNP[Title/Abstract] OR SNPs[Title/Abstract] OR mutation[Title/Abstract] OR mutations[Title/Abstract] OR polymorphism[Title/Abstract]) AND (phenotype[Title/Abstract] OR phenotypic[Title/Abstract] OR disease[Title/Abstract] OR syndrome[Title/Abstract] OR \"clinical features\"[Title/Abstract] OR \"clinical manifestation\"[Title/Abstract] OR trait[Title/Abstract] OR disorder[Title/Abstract]) AND humans[MeSH Terms] AND (\"2026/01/01\"[Date - Publication] : \"3000\"[Date - Publication])"
+    }
+  ]
+}

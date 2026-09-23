@@ -1,0 +1,12 @@
+{
+  "stage0_preflight": "APPROVE",
+  "stage1_pubmed_retrieval": "APPROVE",
+  "stage2_abstract_linking": "APPROVE",
+  "stage3_fulltext_enrichment": "APPROVE",
+  "stage4_discovery_tagging": "APPROVE",
+  "stage5_clinvar_validation": "APPROVE",
+  "stage6_review_quality": "APPROVE",
+  "stage7_journal_priority": "APPROVE",
+  "stage8_pdf_evidence": "APPROVE",
+  "stage9_genomic_export_qc": "APPROVE"
+}

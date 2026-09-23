@@ -1,0 +1,673 @@
+{
+  "schema_version": 1,
+  "gate_config_version": "2026-08-08.v2-dbsnp",
+  "project": "variant_clinical_v3",
+  "description": "Stage-level gate policy and confirmation checklist for the PubMed novel variant-clinical pipeline.",
+  "policy": {
+    "profile": "strict",
+    "allowed_condition_states": [
+      "required",
+      "enabled",
+      "disabled",
+      "audit_only"
+    ],
+    "confirmation_mode": "each_stage",
+    "allowed_confirmation_decisions": [
+      "APPROVE",
+      "HOLD",
+      "BYPASS"
+    ],
+    "on_gate_error": "stop",
+    "on_missing_required_input": "stop",
+    "preserve_rejected_rows": true,
+    "write_gate_report": true,
+    "gate_report_name": "gate_report.json",
+    "record_config_sha256": true,
+    "sample_pass_rows": 10,
+    "sample_reject_rows": 10,
+    "note": "Journal priority and discovery labels are prioritization/annotation signals; they must not independently establish variant validity, pathogenicity, or global literature novelty."
+  },
+  "profiles": {
+    "audit": {
+      "description": "Evaluate all gates and write pass/reject reasons without dropping records.",
+      "override_filter_conditions_to": "audit_only",
+      "confirmation_mode": "each_stage"
+    },
+    "strict": {
+      "description": "Apply all required and enabled quality gates for formal benchmark outputs.",
+      "override_filter_conditions_to": null,
+      "confirmation_mode": "each_stage"
+    },
+    "custom": {
+      "description": "Use the condition state and value declared for each stage.",
+      "override_filter_conditions_to": null,
+      "confirmation_mode": "each_stage"
+    },
+    "resume": {
+      "description": "Resume from an approved stage only when upstream input and gate-config hashes match.",
+      "require_upstream_hash_match": true,
+      "confirmation_mode": "on_change"
+    }
+  },
+  "stages": {
+    "stage0_preflight": {
+      "enabled": true,
+      "action": "stop",
+      "confirm": true,
+      "description": "Validate versions, required files, output isolation, and reproducibility metadata.",
+      "conditions": {
+        "queries_config_exists": {
+          "state": "required",
+          "value": "configs/queries.json"
+        },
+        "journal_config_exists": {
+          "state": "required",
+          "value": "configs/journal_priority.json"
+        },
+        "clinvar_snapshot_exists": {
+          "state": "required",
+          "value": "data/pubmed/ref/clinvar/variant_summary.txt.gz"
+        },
+        "ensembl_gff3_exists": {
+          "state": "required",
+          "value": "data/pubmed/ref/ensembl/Homo_sapiens.GRCh38.115.gff3"
+        },
+        "grch38_fasta_exists": {
+          "state": "required",
+          "value": "data/pubmed/ref/ensembl/Homo_sapiens.GRCh38.dna.toplevel.fa"
+        },
+        "grch38_fai_exists": {
+          "state": "required",
+          "value": "data/pubmed/ref/ensembl/Homo_sapiens.GRCh38.dna.toplevel.fa.fai"
+        },
+        "output_directory_is_writable": {
+          "state": "required",
+          "value": true
+        },
+        "prevent_unversioned_overwrite": {
+          "state": "enabled",
+          "value": true
+        },
+        "record_reference_versions": {
+          "state": "required",
+          "value": [
+            "ClinVar",
+            "PubMed retrieval date",
+            "journal list",
+            "clinical lexicon",
+            "Ensembl GFF3",
+            "GRCh38 FASTA"
+          ]
+        }
+      },
+      "checklist": [
+        "Confirm run profile: audit, strict, custom, or resume.",
+        "Confirm query, ClinVar, journal, dictionary, GFF3, and FASTA versions.",
+        "Confirm output path will not silently overwrite an approved run.",
+        "Record configuration and input SHA-256 hashes."
+      ]
+    },
+    "stage1_pubmed_retrieval": {
+      "enabled": true,
+      "action": "filter",
+      "confirm": true,
+      "description": "Retrieve and normalize PubMed metadata and abstracts.",
+      "current_entrypoint": "scripts/stages/pubmed_pipeline.py",
+      "conditions": {
+        "publication_date_range": {
+          "state": "required",
+          "value": {
+            "from": "2026-01-01",
+            "to": "3000-12-31"
+          }
+        },
+        "humans_mesh": {
+          "state": "enabled",
+          "value": true
+        },
+        "query_ids": {
+          "state": "enabled",
+          "value": [
+            "q1_core_gpc",
+            "q3_case_reports",
+            "q2_high_recall",
+            "q4_mesh",
+            "q5_clinical_genetics",
+            "q6_rsid_trait",
+            "q7_intergenic_regulatory"
+          ]
+        },
+        "require_pmid": {
+          "state": "required",
+          "value": true
+        },
+        "require_title": {
+          "state": "required",
+          "value": true
+        },
+        "require_abstract": {
+          "state": "audit_only",
+          "value": true
+        },
+        "language_english": {
+          "state": "audit_only",
+          "value": "eng"
+        },
+        "maximum_missing_abstract_rate": {
+          "state": "audit_only",
+          "value": 0.1
+        }
+      },
+      "on_fail": "route_to_stage1_rejected",
+      "checklist": [
+        "Confirm date range and enabled query IDs.",
+        "Compare PMID counts by query with the previous run.",
+        "Review missing title and abstract rates.",
+        "Inspect duplicate PMID merge and source_query_ids."
+      ]
+    },
+    "stage2_abstract_linking": {
+      "enabled": true,
+      "action": "filter",
+      "confirm": true,
+      "description": "Detect and link variant and clinical evidence in title/abstract.",
+      "current_entrypoint": "scripts/stages/link_variant_phenotype.py",
+      "conditions": {
+        "variant_and_clinical_dual_presence": {
+          "state": "required",
+          "value": true
+        },
+        "pubtator": {
+          "state": "enabled",
+          "value": true
+        },
+        "allowed_link_tiers": {
+          "state": "enabled",
+          "value": [
+            "A",
+            "B",
+            "C"
+          ]
+        },
+        "strict_concrete_variant_subset": {
+          "state": "enabled",
+          "value": [
+            "c.HGVS",
+            "p.HGVS",
+            "rsID",
+            "NM_",
+            "NP_",
+            "NC_",
+            "NG_",
+            "IVS"
+          ]
+        },
+        "exclude_soft_variant_only": {
+          "state": "enabled",
+          "value": true
+        },
+        "gene_resolution": {
+          "state": "enabled",
+          "value": true
+        }
+      },
+      "on_fail": "route_to_stage2_rejected",
+      "checklist": [
+        "Confirm PubTator availability or explicitly approve --skip-pubtator.",
+        "Confirm retained tiers A/B/C.",
+        "Review pass rate and strict concrete-variant rate.",
+        "Inspect at least 10 passed and 10 rejected examples.",
+        "Check gene binding for place-name and title-case false positives."
+      ]
+    },
+    "stage3_fulltext_enrichment": {
+      "enabled": true,
+      "action": "route",
+      "confirm": true,
+      "description": "Fetch accessible PMC full text and enrich variant-clinical evidence.",
+      "current_entrypoint": "scripts/stages/enrich_fulltext.py",
+      "conditions": {
+        "scope": {
+          "state": "enabled",
+          "value": "pass",
+          "allowed_values": [
+            "pass",
+            "all"
+          ]
+        },
+        "fetch_bioc": {
+          "state": "enabled",
+          "value": true
+        },
+        "fetch_europepmc_jats": {
+          "state": "enabled",
+          "value": true
+        },
+        "fetch_pmc_html": {
+          "state": "enabled",
+          "value": true
+        },
+        "fetch_pmc_pdf": {
+          "state": "enabled",
+          "value": true
+        },
+        "allow_abstract_fallback": {
+          "state": "required",
+          "value": true
+        },
+        "require_concrete_variant": {
+          "state": "required",
+          "value": true
+        },
+        "exclude_reference_sections": {
+          "state": "enabled",
+          "value": true
+        },
+        "same_sentence_or_paragraph_linking": {
+          "state": "enabled",
+          "value": true
+        },
+        "manual_attachments": {
+          "state": "enabled",
+          "value": true
+        }
+      },
+      "on_fail": "continue_abstract_track_and_record_fulltext_failure",
+      "checklist": [
+        "Confirm scope=pass or scope=all.",
+        "Confirm enabled full-text sources and network mode.",
+        "Review retrieval success by BioC/JATS/HTML/PDF.",
+        "Confirm missing full text does not fail the abstract track.",
+        "Inspect full-text-only variants and reference-section exclusions."
+      ]
+    },
+    "stage4_discovery_tagging": {
+      "enabled": true,
+      "action": "annotate",
+      "confirm": true,
+      "description": "Classify novelty/prior-report language without deleting records.",
+      "current_entrypoint": "scripts/stages/tag_discovery.py",
+      "conditions": {
+        "novel_cues": {
+          "state": "enabled",
+          "value": true
+        },
+        "previously_reported_cues": {
+          "state": "enabled",
+          "value": true
+        },
+        "citation_of_prior_cues": {
+          "state": "enabled",
+          "value": true
+        },
+        "phenotype_expansion_cues": {
+          "state": "enabled",
+          "value": true
+        },
+        "default_unclear": {
+          "state": "required",
+          "value": true
+        },
+        "keep_as_new_discovery_labels": {
+          "state": "enabled",
+          "value": [
+            "novel",
+            "phenotype_expansion"
+          ]
+        },
+        "first_in_corpus": {
+          "state": "audit_only",
+          "value": true
+        }
+      },
+      "on_fail": "retain_as_unclear",
+      "checklist": [
+        "Confirm all novelty and prior-report cue groups.",
+        "Review label and confidence distributions by evidence source.",
+        "Verify that tagging does not prove global literature-first status.",
+        "Inspect high-confidence novel and phenotype-expansion examples."
+      ]
+    },
+    "stage5_clinvar_validation": {
+      "enabled": true,
+      "action": "route",
+      "confirm": true,
+      "description": "Compare discovery candidates with a versioned ClinVar snapshot.",
+      "current_entrypoint": "scripts/stages/validate_novelty_clinvar.py",
+      "conditions": {
+        "tracks": {
+          "state": "enabled",
+          "value": [
+            "strict",
+            "fulltext",
+            "enriched"
+          ]
+        },
+        "require_resolvable_key_for_absent": {
+          "state": "required",
+          "value": true
+        },
+        "allow_exact_gene_c": {
+          "state": "enabled",
+          "value": true
+        },
+        "allow_exact_gene_p": {
+          "state": "enabled",
+          "value": true
+        },
+        "allow_exact_rsid": {
+          "state": "enabled",
+          "value": true
+        },
+        "allow_fuzzy_hgvs": {
+          "state": "audit_only",
+          "value": true
+        },
+        "phenotype_lexical_overlap": {
+          "state": "enabled",
+          "value": true
+        },
+        "variant_absent_candidate": {
+          "state": "enabled",
+          "value": true
+        },
+        "clinvar_absent_proves_literature_first": {
+          "state": "disabled",
+          "value": false
+        }
+      },
+      "on_fail": "route_to_unresolvable",
+      "checklist": [
+        "Confirm ClinVar snapshot date and file hash.",
+        "Confirm strict/fulltext/enriched tracks.",
+        "Review exact, fuzzy, ambiguous, none, and unresolvable counts.",
+        "Inspect gene/HGVS keys used for variant_absent records.",
+        "Record that ClinVar absence is not proof of literature novelty."
+      ]
+    },
+    "stage6_review_quality": {
+      "enabled": true,
+      "action": "filter",
+      "confirm": true,
+      "description": "Build gene-confirmed high-confidence review subsets.",
+      "current_entrypoint": "scripts/stages/filter_review_corpus.py",
+      "conditions": {
+        "gene_confirmed": {
+          "state": "required",
+          "value": true
+        },
+        "discovery_confidence": {
+          "state": "required",
+          "value": "high"
+        },
+        "trusted_methods": {
+          "state": "required",
+          "value": [
+            "same_sentence_cooccurrence",
+            "same_abstract_cooccurrence",
+            "fulltext_same_sentence_cooccurrence",
+            "fulltext_same_paragraph_cooccurrence",
+            "fulltext_known_variant_sentence"
+          ]
+        },
+        "entity_clinical_sources": {
+          "state": "required",
+          "value": [
+            "lexicon_entity",
+            "lexicon_sentence",
+            "lexicon_paragraph",
+            "lexicon_title"
+          ]
+        },
+        "trusted_gene_sources": {
+          "state": "required",
+          "value": [
+            "row_gene",
+            "pubtator_or_context"
+          ]
+        },
+        "exclude_generic_clinical_text": {
+          "state": "required",
+          "value": true
+        },
+        "strict_tiers": {
+          "state": "required",
+          "value": [
+            "A"
+          ]
+        },
+        "extended_tiers": {
+          "state": "enabled",
+          "value": [
+            "A",
+            "B"
+          ]
+        },
+        "deduplicate_by": {
+          "state": "required",
+          "value": "gene|variant"
+        }
+      },
+      "on_fail": "route_to_review_rejected",
+      "checklist": [
+        "Confirm gene, discovery, method, clinical-source, and gene-source gates.",
+        "Confirm generic clinical-text exclusions.",
+        "Confirm strict=A and extended=A/B.",
+        "Review each rejection-reason count.",
+        "Inspect pass/reject samples before approval."
+      ]
+    },
+    "stage7_journal_priority": {
+      "enabled": true,
+      "action": "route",
+      "confirm": true,
+      "description": "Prioritize review candidates by a curated, versioned journal list.",
+      "current_entrypoint": "scripts/stages/filter_journal_priority.py",
+      "conditions": {
+        "journal_list": {
+          "state": "required",
+          "value": "configs/journal_priority.json"
+        },
+        "match_priority": {
+          "state": "enabled",
+          "value": [
+            "issn",
+            "journal_iso_alias",
+            "journal_alias",
+            "default"
+          ]
+        },
+        "priority_tiers": {
+          "state": "enabled",
+          "value": [
+            "A",
+            "B",
+            "C",
+            "WATCH"
+          ]
+        },
+        "retain_tier_c": {
+          "state": "required",
+          "value": true
+        },
+        "retain_watch": {
+          "state": "required",
+          "value": true
+        },
+        "journal_tier_determines_variant_validity": {
+          "state": "disabled",
+          "value": false
+        },
+        "journal_tier_determines_novelty": {
+          "state": "disabled",
+          "value": false
+        }
+      },
+      "on_fail": "route_to_default_tier_c",
+      "checklist": [
+        "Confirm journal-list version and reviewed_at date.",
+        "Review unmatched journal/ISSN TSV.",
+        "Confirm A, A+B, and other candidate counts.",
+        "Confirm C and WATCH records are retained.",
+        "Use journal tier only for review and full-text acquisition order."
+      ]
+    },
+    "stage8_pdf_evidence": {
+      "enabled": true,
+      "action": "annotate",
+      "confirm": true,
+      "description": "Extract literature pathogenicity and functional evidence from PDF text.",
+      "conditions": {
+        "require_source_provenance": {
+          "state": "required",
+          "value": true
+        },
+        "require_source_hash": {
+          "state": "required",
+          "value": true
+        },
+        "variant_anchor": {
+          "state": "required",
+          "value": true
+        },
+        "pathogenicity_labels": {
+          "state": "enabled",
+          "value": [
+            "pathogenic",
+            "likely_pathogenic",
+            "uncertain",
+            "likely_benign",
+            "benign",
+            "conflicting",
+            "not_evaluated"
+          ]
+        },
+        "separate_prediction_from_acmg_classification": {
+          "state": "required",
+          "value": true
+        },
+        "retain_evidence_sentence": {
+          "state": "required",
+          "value": true
+        },
+        "retain_evidence_confidence": {
+          "state": "required",
+          "value": true
+        },
+        "ocr_or_table_warning": {
+          "state": "enabled",
+          "value": true
+        }
+      },
+      "on_fail": "label_not_evaluated",
+      "checklist": [
+        "Confirm PDF source, PMID mapping, and SHA-256.",
+        "Confirm the pathogenicity phrase refers to the target variant.",
+        "Separate ACMG classification from in-silico prediction.",
+        "Retain original evidence sentence and confidence.",
+        "Flag OCR, table, and supplementary-material extraction risks."
+      ]
+    },
+    "stage9_genomic_export_qc": {
+      "enabled": true,
+      "action": "filter",
+      "confirm": true,
+      "description": "Resolve genomic alleles and validate GRCh38 coordinates and REF sequence.",
+      "current_entrypoints": [
+        "scripts/stages/export_genomic_allele_csv.py",
+        "scripts/stages/validate_grch38_ref_context5.py"
+      ],
+      "conditions": {
+        "target_assembly": {
+          "state": "required",
+          "value": "GRCh38"
+        },
+        "resolver_order": {
+          "state": "required",
+          "value": [
+            "literal_text",
+            "clinvar",
+            "pdf_literal_genomic",
+            "ensembl_mane_p_map",
+            "ensembl_mane_c_map",
+            "rs_dbsnp",
+            "c_hgvs_alleles_only",
+            "unresolved"
+          ]
+        },
+        "dbsnp_rsid_fallback": {
+          "state": "enabled",
+          "value": true,
+          "note": "When ClinVar/PDF/Ensembl cannot resolve an rsID, query NCBI Variation RefSNP API and set allele_query_source=dbsnp"
+        },
+        "prefer_mane_transcript": {
+          "state": "enabled",
+          "value": true
+        },
+        "vcf_left_align_deletions": {
+          "state": "required",
+          "value": true
+        },
+        "require_ref_fasta_match_for_ok": {
+          "state": "required",
+          "value": true
+        },
+        "context_bases_each_side": {
+          "state": "enabled",
+          "value": 5
+        },
+        "retain_partial": {
+          "state": "required",
+          "value": true
+        },
+        "retain_unresolved": {
+          "state": "required",
+          "value": true
+        },
+        "manual_review_fix_operation": {
+          "state": "required",
+          "value": true
+        }
+      },
+      "on_fail": "route_to_partial_or_unresolved",
+      "checklist": [
+        "Confirm GRCh38 FASTA, FAI, GFF3, and MANE cache versions.",
+        "Confirm resolver order and strand handling.",
+        "Confirm VCF-style left alignment for deletions.",
+        "Review REF/FASTA mismatches and five-base context.",
+        "Review all partial, unresolved, and non-empty fix_operation records."
+      ]
+    }
+  },
+  "gate_report_contract": {
+    "required_fields": [
+      "stage_id",
+      "stage_status",
+      "decision",
+      "approved_by",
+      "approved_at",
+      "profile",
+      "input_paths",
+      "input_sha256",
+      "gate_config_path",
+      "gate_config_sha256",
+      "conditions",
+      "n_input",
+      "n_pass",
+      "n_reject",
+      "reject_reason_counts",
+      "pass_sample",
+      "reject_sample",
+      "output_paths",
+      "notes"
+    ],
+    "stage_status_values": [
+      "pending",
+      "running",
+      "passed",
+      "held",
+      "bypassed",
+      "failed"
+    ]
+  }
+}

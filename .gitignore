@@ -1,0 +1,21 @@
+# Generated pipeline products
+data/pubmed/ingest/
+data/pubmed/pipeline/
+data/pubmed/cache/
+data/pubmed/runs/
+logs/
+
+# Large local references (ClinVar + Ensembl). Recreate with:
+#   python scripts/run.py bootstrap --link-from /path/to/existing/tree
+# or --import-from / --download-clinvar
+data/pubmed/ref/
+
+__pycache__/
+*.py[cod]
+.venv/
+
+# The four Stage shims have no Python source; these payloads must be versioned.
+!scripts/link_variant_phenotype.pyc
+!scripts/pubmed_pipeline.pyc
+!scripts/validate_novelty_clinvar.pyc
+!scripts/vc_ensembl_c_map.pyc

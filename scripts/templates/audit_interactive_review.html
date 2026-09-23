@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-save-file="{{SAVE_FILENAME}}">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="audit-save-file" content="{{SAVE_FILENAME}}" />
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #f3f1ec;
+    --panel: #fffcf7;
+    --ink: #1c1a16;
+    --muted: #5c574e;
+    --line: #d8d2c6;
+    --accent: #0f5c4c;
+    --accent-ink: #ffffff;
+    --pass: #1f6b3a;
+    --doubt: #9a6700;
+    --fail: #9b1c1c;
+    --pending: #7a756b;
+    --focus: #0f5c4c33;
+    --mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "Source Sans 3", "IBM Plex Sans", "Segoe UI", sans-serif;
+    --zoom: 1;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--bg);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+  }
+  header {
+    display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center;
+    padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  header h1 { font-size: 1.05rem; margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+  header .meta { color: var(--muted); font-size: 0.85rem; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-left: auto; }
+  button, .file-btn, select, input[type="search"], textarea { font: inherit; color: var(--ink); }
+  button, .file-btn {
+    border: 1px solid var(--line); background: #fff; border-radius: 6px;
+    padding: 0.35rem 0.7rem; cursor: pointer;
+  }
+  button:hover, .file-btn:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.verdict { min-width: 4.5rem; font-weight: 600; }
+  button.verdict.pass.active, button.verdict.pass:focus { background: var(--pass); color: #fff; border-color: var(--pass); }
+  button.verdict.doubt.active, button.verdict.doubt:focus { background: var(--doubt); color: #fff; border-color: var(--doubt); }
+  button.verdict.fail.active, button.verdict.fail:focus { background: var(--fail); color: #fff; border-color: var(--fail); }
+  .file-btn input { display: none; }
+  main {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) 1fr;
+    min-height: 0;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 220px 1fr; }
+  }
+  aside {
+    border-right: 1px solid var(--line); background: var(--panel);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .filters { padding: 0.65rem; display: grid; gap: 0.4rem; border-bottom: 1px solid var(--line); }
+  .filters .row { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .filters select, .filters input[type="search"] {
+    flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.35rem 0.5rem; background: #fff;
+  }
+  .list { overflow: auto; flex: 1; }
+  .item {
+    display: grid; gap: 0.15rem; padding: 0.55rem 0.7rem; cursor: pointer;
+    border-bottom: 1px solid var(--line); border-left: 3px solid transparent;
+  }
+  .item:hover { background: #f0ebe3; }
+  .item.active { background: var(--focus); border-left-color: var(--accent); }
+  .item .id { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+  .item .title { font-size: 0.9rem; font-weight: 600; }
+  .item .sub { font-size: 0.78rem; color: var(--muted); }
+  .badge {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;
+    padding: 0.05rem 0.35rem; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--pending); background: #fff;
+  }
+  .badge.pass { color: var(--pass); border-color: #b7dfc3; background: #eaf7ef; }
+  .badge.doubt { color: var(--doubt); border-color: #f0d89a; background: #fff7e6; }
+  .badge.fail { color: var(--fail); border-color: #f0b4b4; background: #fdecec; }
+  .badge.dirty { color: #8a3b12; border-color: #e7c3a8; background: #fff1e6; }
+  .viewer { display: flex; flex-direction: column; min-height: 0; background: var(--bg); }
+  .viewer-head {
+    padding: 0.75rem 1rem; background: var(--panel); border-bottom: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline;
+  }
+  .viewer-head h2 { margin: 0; font-size: 1.15rem; }
+  .viewer-head a { color: var(--accent); }
+  .stage-tabs {
+    display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  .stage-tabs button {
+    font-family: var(--mono); font-size: 0.78rem; padding: 0.25rem 0.45rem;
+  }
+  .stage-tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .stage-body { flex: 1; overflow: auto; padding: 1rem; }
+  .stage-body pre {
+    margin: 0; white-space: pre-wrap; word-break: break-word;
+    font-family: var(--mono); font-size: calc(0.82rem * var(--zoom));
+    line-height: 1.55; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 1rem 1.1rem;
+  }
+  footer.judge {
+    border-top: 1px solid var(--line); background: var(--panel);
+    padding: 0.75rem 1rem; display: grid;
+    grid-template-columns: auto 1fr auto; gap: 0.75rem; align-items: start;
+  }
+  @media (max-width: 900px) {
+    footer.judge { grid-template-columns: 1fr; }
+  }
+  .verdicts { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .reason-box { display: grid; gap: 0.35rem; }
+  .reason-box .row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .reason-box select, .reason-box textarea {
+    border: 1px solid var(--line); border-radius: 6px; padding: 0.4rem 0.5rem; background: #fff;
+  }
+  .reason-box textarea { width: 100%; min-height: 3.2rem; resize: vertical; }
+  .export-box { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
+  .empty {
+    padding: 2.5rem 1.5rem; color: var(--muted); max-width: 42rem; margin: auto; text-align: center;
+  }
+  .empty code { font-family: var(--mono); font-size: 0.85rem; }
+  .drop-active { outline: 2px dashed var(--accent); outline-offset: -6px; }
+  .stats { font-size: 0.8rem; color: var(--muted); }
+  .save-hint { font-size: 0.78rem; color: var(--doubt); font-weight: 600; }
+  .save-mode { font-size: 0.78rem; color: var(--muted); }
+  .save-mode.online { color: var(--pass); font-weight: 600; }
+  kbd {
+    font-family: var(--mono); font-size: 0.75rem; border: 1px solid var(--line);
+    border-bottom-width: 2px; border-radius: 4px; padding: 0 0.3rem; background: #fff;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>{{TITLE}}</h1>
+  </div>
+  <div class="toolbar">
+    <button type="button" class="primary" id="btnSaveHtml" title="写回原 HTML，或离线覆盖/下载">保存进度</button>
+    <label class="file-btn">导入标注 JSON<input id="annInput" type="file" accept=".json,application/json" /></label>
+    <label class="file-btn">打开 JSONL<input id="fileInput" type="file" accept=".jsonl,.json,application/jsonl,text/plain" /></label>
+    <button type="button" id="btnZoomOut" title="缩小">A−</button>
+    <button type="button" id="btnZoomReset" title="重置">100%</button>
+    <button type="button" id="btnZoomIn" title="放大">A+</button>
+    <span class="stats" id="stats"></span>
+    <span class="save-mode" id="saveMode">检测保存通道…</span>
+    <span class="save-hint" id="saveHint" hidden>未保存更改</span>
+  </div>
+</header>
+
+<main id="main">
+  <aside>
+    <div class="filters">
+      <div class="row">
+        <select id="filterClass">
+          <option value="">全部类别</option>
+          <option value="positive">positive</option>
+          <option value="negative">negative</option>
+        </select>
+        <select id="filterTier">
+          <option value="">全部 link_tier</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+        </select>
+      </div>
+      <div class="row">
+        <select id="filterVerdict">
+          <option value="">全部审核状态</option>
+          <option value="pending">未审</option>
+          <option value="pass">pass</option>
+          <option value="doubt">doubt</option>
+          <option value="fail">fail</option>
+        </select>
+        <select id="filterRegion">
+          <option value="">全部 genomic_region</option>
+          <option value="coding">coding</option>
+          <option value="utr">utr</option>
+          <option value="intron">intron</option>
+          <option value="ncrna_exon">ncrna_exon</option>
+          <option value="ncrna_gene">ncrna_gene</option>
+          <option value="pseudogene">pseudogene</option>
+          <option value="intergenic">intergenic</option>
+          <option value="empty">机器空</option>
+          <option value="unlabeled">人工未标</option>
+        </select>
+      </div>
+      <div class="row">
+        <input id="filterQ" type="search" placeholder="搜 gene / PMID / variant / region / id" />
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
+  <section class="viewer" id="viewer">
+    <div class="empty" id="emptyHint">
+      <p>把 <code>stage_audit_chains_*.jsonl</code> 拖进本页，或点右上角「打开 JSONL」。</p>
+      <p>也可使用已嵌入数据包的 <code>review_*.html</code>（嵌入条数：{{EMBED_COUNT}}）。</p>
+      <p>快捷键：<kbd>1</kbd> pass · <kbd>2</kbd> doubt · <kbd>3</kbd> fail · <kbd>j</kbd>/<kbd>k</kbd> 下/上一条 · <kbd>s</kbd> 保存进度 · <kbd>[</kbd>/<kbd>]</kbd> 缩放</p>
+    </div>
+  </section>
+</main>
+
+<footer class="judge" id="judge" hidden>
+  <div class="verdicts">
+    <button type="button" class="verdict pass" data-v="pass">pass</button>
+    <button type="button" class="verdict doubt" data-v="doubt">doubt</button>
+    <button type="button" class="verdict fail" data-v="fail">fail</button>
+    <button type="button" id="btnClearVerdict">清除</button>
+  </div>
+  <div class="reason-box">
+    <div class="row">
+      <label>问题阶段
+        <select id="failStage">
+          <option value="">（无 / 未指定）</option>
+          <option>Stage0</option><option>Stage1</option><option>Stage2</option>
+          <option>Stage3</option><option>Stage4</option><option>Stage5</option>
+          <option>Stage6</option><option>Stage7</option><option>Stage8</option>
+          <option>Stage9</option>
+        </select>
+      </label>
+      <label>人工 genomic_region
+        <select id="humanRegion">
+          <option value="">（未标 / 沿用机器）</option>
+          <option value="coding">coding</option>
+          <option value="utr">utr</option>
+          <option value="intron">intron</option>
+          <option value="ncrna_exon">ncrna_exon</option>
+          <option value="ncrna_gene">ncrna_gene</option>
+          <option value="pseudogene">pseudogene</option>
+          <option value="intergenic">intergenic</option>
+        </select>
+      </label>
+    </div>
+    <textarea id="comment" placeholder="审核理由 / 存疑点 / genomic_region 改判说明（保存时一并写入文件）"></textarea>
+  </div>
+  <div class="export-box">
+    <button type="button" id="btnPrev">上一条</button>
+    <button type="button" id="btnNext">下一条</button>
+    <button type="button" class="primary" id="btnSaveHtml2">保存进度</button>
+    <button type="button" id="btnExportJson">导出标注 JSON</button>
+    <button type="button" id="btnExportCsv">导出标注 CSV</button>
+  </div>
+</footer>
+
+<script id="embedded-data" type="application/json">/*{{EMBEDDED_JSON}}*/</script>
+<script id="embedded-annotations" type="application/json">/*{{EMBEDDED_ANNOTATIONS_JSON}}*/</script>
+<script>
+(() => {
+  const DEFAULT_SERVER = "http://127.0.0.1:8765";
+  const state = {
+    records: [],
+    filtered: [],
+    idx: 0,
+    zoom: 1,
+    annotations: {},
+    stageView: "all",
+    dirty: false,
+    fileHandle: null,
+    serverBase: null,
+    viewingId: "",
+    saveName: (document.title || "audit_review").replace(/[^\w.\-]+/g, "_") + ".html",
+    bakedSaveName: "{{SAVE_FILENAME}}",
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const listEl = $("list");
+  const viewer = $("viewer");
+  const judge = $("judge");
+  const stats = $("stats");
+  const emptyHint = $("emptyHint");
+  const saveHint = $("saveHint");
+  const saveMode = $("saveMode");
+
+  function currentHtmlName() {
+    const baked = (state.bakedSaveName || "").trim();
+    if (/\.html?$/i.test(baked) && baked.indexOf("{{") === -1) return baked;
+    const attr = document.documentElement.getAttribute("data-save-file") || "";
+    if (/\.html?$/i.test(attr) && attr.indexOf("{{") === -1) return attr;
+    const last = decodeURIComponent((location.pathname || "").split("/").pop() || "");
+    // Cursor webview / Simple Browser often reports pathname as /index.html
+    if (/\.html?$/i.test(last) && last.toLowerCase() !== "index.html") return last;
+    return state.saveName;
+  }
+
+  function setSaveModeText() {
+    if (!saveMode) return;
+    if (state.serverBase !== null) {
+      const where = state.serverBase || location.origin;
+      saveMode.textContent = "写回服务已连接 · " + where;
+      saveMode.classList.add("online");
+    } else {
+      saveMode.textContent = "离线模式 · 保存将覆盖/下载 HTML";
+      saveMode.classList.remove("online");
+    }
+  }
+
+  function markDirty(v) {
+    state.dirty = !!v;
+    saveHint.hidden = !state.dirty;
+  }
+
+  function annFor(id) {
+    const base = state.annotations[id] || {};
+    const rec = state.records.find(r => r.audit_id === id) || {};
+    return {
+      human_verdict: base.human_verdict || rec.human_verdict || "",
+      human_fail_stage: base.human_fail_stage || rec.human_fail_stage || "",
+      human_comment: base.human_comment || rec.human_comment || "",
+      human_genomic_region: base.human_genomic_region || rec.human_genomic_region || "",
+      updated_at: base.updated_at || "",
+    };
+  }
+
+  function setZoom(z) {
+    state.zoom = Math.min(2.2, Math.max(0.7, z));
+    document.documentElement.style.setProperty("--zoom", String(state.zoom));
+    $("btnZoomReset").textContent = Math.round(state.zoom * 100) + "%";
+  }
+
+  function parseJsonl(text) {
+    const rows = [];
+    for (const line of text.split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t) continue;
+      rows.push(JSON.parse(t));
+    }
+    return rows;
+  }
+
+  function recKey(r, withClass = true) {
+    const cls = withClass ? String(r.sample_class || "").toLowerCase() : "";
+    return [cls, String(r.pmid || ""), String(r.gene || "").toUpperCase(), String(r.variant_text || "").trim()].join("\t");
+  }
+
+  function annHasContent(a) {
+    return !!(a && (a.human_verdict || a.human_comment || a.human_fail_stage || a.human_genomic_region));
+  }
+
+  function applyAnnotationList(arr) {
+    if (!Array.isArray(arr)) return 0;
+    let n = 0;
+    for (const a of arr) {
+      if (!a || !a.audit_id) continue;
+      state.annotations[a.audit_id] = {
+        human_verdict: a.human_verdict || "",
+        human_fail_stage: a.human_fail_stage || "",
+        human_comment: a.human_comment || "",
+        human_genomic_region: a.human_genomic_region || "",
+        genomic_region: a.genomic_region || "",
+        updated_at: a.updated_at || "",
+        audit_id: a.audit_id,
+        pmid: a.pmid || "",
+        gene: a.gene || "",
+        variant_text: a.variant_text || "",
+        sample_class: a.sample_class || "",
+        link_tier: a.link_tier || "",
+      };
+      n += 1;
+    }
+    return n;
+  }
+
+  function overlayAnnotationsByRecordKey() {
+    const byKey = {};
+    for (const a of Object.values(state.annotations)) {
+      if (!annHasContent(a)) continue;
+      const k1 = recKey(a, true);
+      const k2 = recKey(a, false);
+      (byKey[k1] ||= []).push(a);
+      (byKey[k2] ||= []).push(a);
+    }
+    const used = new Set();
+    for (const r of state.records) {
+      if (annHasContent(state.annotations[r.audit_id])) continue;
+      let found = null;
+      for (const k of [recKey(r, true), recKey(r, false)]) {
+        for (const a of (byKey[k] || [])) {
+          if (used.has(a.audit_id)) continue;
+          found = a;
+          break;
+        }
+        if (found) break;
+      }
+      if (!found) continue;
+      used.add(found.audit_id);
+      state.annotations[r.audit_id] = {
+        ...found,
+        audit_id: r.audit_id,
+        pmid: r.pmid || found.pmid || "",
+        gene: r.gene || found.gene || "",
+        variant_text: r.variant_text || found.variant_text || "",
+        sample_class: r.sample_class || found.sample_class || "",
+        overlay_from_audit_id: found.audit_id,
+      };
+    }
+  }
+
+  function ingest(rows) {
+    state.records = rows.map((r, i) => ({
+      ...r,
+      audit_id: r.audit_id || `${r.sample_class || "row"}_${r.pmid || i}_${i}`,
+    }));
+    for (const r of state.records) {
+      if (!state.annotations[r.audit_id] && (r.human_verdict || r.human_comment || r.human_fail_stage || r.human_genomic_region)) {
+        state.annotations[r.audit_id] = {
+          human_verdict: r.human_verdict || "",
+          human_fail_stage: r.human_fail_stage || "",
+          human_comment: r.human_comment || "",
+          human_genomic_region: r.human_genomic_region || "",
+          updated_at: new Date().toISOString(),
+        };
+      }
+    }
+    overlayAnnotationsByRecordKey();
+    applyFilter();
+    if (state.filtered.length) selectIndex(0);
+    emptyHint.hidden = state.records.length > 0;
+    judge.hidden = state.records.length === 0;
+  }
+
+  function applyFilter() {
+    const cls = $("filterClass").value;
+    const tier = $("filterTier").value;
+    const verd = $("filterVerdict").value;
+    const region = $("filterRegion") ? $("filterRegion").value : "";
+    const q = ($("filterQ").value || "").trim().toLowerCase();
+    const curId = state.filtered[state.idx]?.audit_id;
+    state.filtered = state.records.filter((r) => {
+      if (cls && (r.sample_class || "") !== cls) return false;
+      if (tier && String(r.link_tier || "").toUpperCase() !== tier) return false;
+      const a = annFor(r.audit_id);
+      const v = (a.human_verdict || "").toLowerCase();
+      if (verd === "pending" && v) return false;
+      if (verd && verd !== "pending" && v !== verd) return false;
+      const machineRegion = String(r.genomic_region || "").trim();
+      const humanRegion = String(a.human_genomic_region || "").trim();
+      if (region === "empty" && machineRegion) return false;
+      if (region === "unlabeled" && humanRegion) return false;
+      if (region && region !== "empty" && region !== "unlabeled" && machineRegion !== region && humanRegion !== region) return false;
+      if (q) {
+        const hay = [r.audit_id, r.pmid, r.gene, r.variant_text, r.label, r.c_hgvs, r.p_hgvs, machineRegion, humanRegion]
+          .join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    renderList();
+    updateStats();
+    const newIdx = Math.max(0, state.filtered.findIndex(r => r.audit_id === curId));
+    if (state.filtered.length) selectIndex(newIdx === -1 ? 0 : newIdx);
+    else renderViewer(null);
+  }
+
+  function updateStats() {
+    let pass = 0, doubt = 0, fail = 0, pending = 0;
+    for (const r of state.records) {
+      const v = (annFor(r.audit_id).human_verdict || "").toLowerCase();
+      if (v === "pass") pass++;
+      else if (v === "doubt") doubt++;
+      else if (v === "fail") fail++;
+      else pending++;
+    }
+    const dirty = state.dirty ? " · 未保存" : "";
+    stats.textContent = `共 ${state.records.length} · 筛选 ${state.filtered.length} · pass ${pass} / doubt ${doubt} / fail ${fail} / 未审 ${pending}${dirty}`;
+  }
+
+  function renderList() {
+    listEl.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    state.filtered.forEach((r, i) => {
+      const a = annFor(r.audit_id);
+      const v = (a.human_verdict || "pending").toLowerCase() || "pending";
+      const div = document.createElement("div");
+      div.className = "item" + (i === state.idx ? " active" : "");
+      div.innerHTML = `
+        <div class="id">${escapeHtml(r.audit_id)} <span class="badge ${escapeHtml(v)}">${escapeHtml(v)}</span></div>
+        <div class="title">${escapeHtml(r.gene || "∅")} · ${escapeHtml(r.variant_text || "")}</div>
+        <div class="sub">${escapeHtml(r.sample_class || "")} · PMID ${escapeHtml(r.pmid || "")} · tier ${escapeHtml(r.link_tier || "∅")} · ${escapeHtml(r.genomic_region || "region∅")}${a.human_genomic_region ? " → " + escapeHtml(a.human_genomic_region) : ""}</div>`;
+      div.addEventListener("click", () => selectIndex(i));
+      frag.appendChild(div);
+    });
+    listEl.appendChild(frag);
+  }
+
+  function selectIndex(i) {
+    if (!state.filtered.length) return;
+    flushCurrentForm();
+    state.idx = Math.max(0, Math.min(state.filtered.length - 1, i));
+    renderList();
+    renderViewer(state.filtered[state.idx]);
+    const active = listEl.querySelector(".item.active");
+    if (active) active.scrollIntoView({ block: "nearest" });
+  }
+
+  function sanitizeReviewText(s) {
+    let t = String(s ?? "");
+    t = t.replace(/^说明：Stage0 为跑次级环境检查[^\n]*\n?/gm, "");
+    t = t.replace(/\n*【人工核对栏】[\s\S]*$/, "");
+    t = t.replace(/\n{3,}/g, "\n\n").trim();
+    return t;
+  }
+
+  function stageText(rec, key) {
+    if (key === "checklist") key = "all";
+    if (key === "all") return sanitizeReviewText(rec.reasoning_chain_text || buildAllStages(rec));
+    return sanitizeReviewText(rec[key] || "");
+  }
+
+  function buildAllStages(rec) {
+    const parts = [];
+    for (let i = 0; i < 10; i++) {
+      const t = rec[`stage${i}_text`];
+      if (t) parts.push(t);
+    }
+    return parts.join("\n\n");
+  }
+
+  function renderViewer(rec) {
+    if (!rec) {
+      viewer.innerHTML = "";
+      viewer.appendChild(emptyHint);
+      emptyHint.hidden = false;
+      judge.hidden = true;
+      return;
+    }
+    emptyHint.hidden = true;
+    judge.hidden = false;
+    const a = annFor(rec.audit_id);
+    const allele = [rec.chromosome_ucsc, rec.position, rec.ref && rec.alt ? `${rec.ref}>${rec.alt}` : ""]
+      .filter(Boolean).join(":");
+    const pubUrl = rec.pubmed_url || ("https://pubmed.ncbi.nlm.nih.gov/" + (rec.pmid || ""));
+    viewer.innerHTML = `
+      <div class="viewer-head">
+        <h2>${escapeHtml(rec.gene || "∅")} ${escapeHtml(rec.variant_text || "")}</h2>
+        <span class="meta">
+          ${escapeHtml(rec.sample_class)} · label=${escapeHtml(rec.label || "")} ·
+          link_tier=${escapeHtml(rec.link_tier || "")} · resolve=${escapeHtml(rec.resolve_status || "")}/${escapeHtml(rec.resolve_method || "")}
+          · ${escapeHtml(allele || "等位未解析")}
+          · genomic_region=${escapeHtml(rec.genomic_region || "∅")}${a.human_genomic_region ? " → 人工 " + escapeHtml(a.human_genomic_region) : ""}
+          · genes=${escapeHtml(rec.genomic_region_genes || "∅")}
+          · <a href="${escapeHtml(pubUrl)}" target="_blank" rel="noopener noreferrer">PMID ${escapeHtml(rec.pmid || "")}</a>
+        </span>
+      </div>
+      <div class="stage-tabs" id="stageTabs"></div>
+      <div class="stage-body"><pre id="stagePre"></pre></div>`;
+    if (state.stageView === "checklist") state.stageView = "all";
+    const tabs = [
+      ["all", "全文链"],
+      ...Array.from({ length: 10 }, (_, i) => [`stage${i}_text`, `S${i}`]),
+    ];
+    const tabBar = $("stageTabs");
+    for (const [key, label] of tabs) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.className = state.stageView === key ? "active" : "";
+      b.addEventListener("click", () => {
+        state.stageView = key;
+        renderViewer(rec);
+      });
+      tabBar.appendChild(b);
+    }
+    $("stagePre").textContent = stageText(rec, state.stageView);
+
+    document.querySelectorAll("button.verdict").forEach((b) => {
+      b.classList.toggle("active", b.dataset.v === (a.human_verdict || "").toLowerCase());
+    });
+    $("failStage").value = a.human_fail_stage || "";
+    if ($("humanRegion")) $("humanRegion").value = a.human_genomic_region || "";
+    $("comment").value = a.human_comment || "";
+    state.viewingId = rec.audit_id;
+  }
+
+  function writeCurrent(partial, opts) {
+    const rec = state.filtered[state.idx];
+    if (!rec) return;
+    const prev = annFor(rec.audit_id);
+    state.annotations[rec.audit_id] = {
+      ...prev,
+      ...partial,
+      audit_id: rec.audit_id,
+      pmid: rec.pmid,
+      gene: rec.gene,
+      variant_text: rec.variant_text,
+      sample_class: rec.sample_class,
+      link_tier: rec.link_tier,
+      genomic_region: rec.genomic_region || "",
+      updated_at: new Date().toISOString(),
+    };
+    markDirty(true);
+    updateStats();
+    if (!opts || opts.render !== false) {
+      renderList();
+      document.querySelectorAll("button.verdict").forEach((b) => {
+        b.classList.toggle("active", b.dataset.v === (state.annotations[rec.audit_id].human_verdict || "").toLowerCase());
+      });
+    }
+  }
+
+  function flushCurrentForm() {
+    const rec = state.filtered[state.idx];
+    if (!rec || rec.audit_id !== state.viewingId) return;
+    const commentEl = $("comment");
+    const stageEl = $("failStage");
+    const regionEl = $("humanRegion");
+    if (!commentEl || !stageEl || judge.hidden) return;
+    const prev = annFor(rec.audit_id);
+    const comment = commentEl.value;
+    const failStage = stageEl.value;
+    const region = regionEl ? regionEl.value : "";
+    if (
+      comment === (prev.human_comment || "")
+      && failStage === (prev.human_fail_stage || "")
+      && region === (prev.human_genomic_region || "")
+    ) return;
+    writeCurrent(
+      { human_comment: comment, human_fail_stage: failStage, human_genomic_region: region },
+      { render: false },
+    );
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function annotationsArray() {
+    const ids = new Set([
+      ...state.records.map((r) => r.audit_id),
+      ...Object.keys(state.annotations),
+    ]);
+    const out = [];
+    for (const id of ids) {
+      const rec = state.records.find((r) => r.audit_id === id) || {};
+      const a = annFor(id);
+      if (!(a.human_verdict || a.human_fail_stage || a.human_comment || a.human_genomic_region)) continue;
+      out.push({
+        audit_id: id,
+        sample_class: rec.sample_class || state.annotations[id]?.sample_class || "",
+        pmid: rec.pmid || state.annotations[id]?.pmid || "",
+        gene: rec.gene || state.annotations[id]?.gene || "",
+        variant_text: rec.variant_text || state.annotations[id]?.variant_text || "",
+        link_tier: rec.link_tier || state.annotations[id]?.link_tier || "",
+        genomic_region: rec.genomic_region || state.annotations[id]?.genomic_region || "",
+        human_genomic_region: a.human_genomic_region || "",
+        human_verdict: a.human_verdict || "",
+        human_fail_stage: a.human_fail_stage || "",
+        human_comment: a.human_comment || "",
+        updated_at: a.updated_at || "",
+      });
+    }
+    return out;
+  }
+
+  function annotationPayload() {
+    flushCurrentForm();
+    const arr = annotationsArray();
+    let payload = JSON.stringify(arr);
+    payload = payload.replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
+    const node = $("embedded-annotations");
+    if (node) node.textContent = payload;
+    return { arr, payload };
+  }
+
+  function injectAnnotationsIntoHtml(html, payload) {
+    const re = /(<script\s+id=["']embedded-annotations["'][^>]*>)([\s\S]*?)(<\/script>)/i;
+    if (re.test(html)) return html.replace(re, (_, a, __, c) => a + payload + c);
+    const endScript = "<" + "/script>";
+    const openAnn = "<" + 'script id="embedded-annotations" type="application/json">';
+    return html.replace(/<\/body>/i, openAnn + payload + endScript + "\n</body>");
+  }
+
+  async function htmlSourceForOfflineSave(payload) {
+    try {
+      const r = await fetch(location.href, { cache: "no-store" });
+      if (r.ok) {
+        const text = await r.text();
+        if (text && /id=["']embedded-annotations["']/i.test(text)) {
+          return injectAnnotationsIntoHtml(text, payload);
+        }
+      }
+    } catch (_) {}
+    return injectAnnotationsIntoHtml("<!DOCTYPE html>\n" + document.documentElement.outerHTML, payload);
+  }
+
+  function downloadBlob(text, name, type) {
+    const blob = new Blob([text], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function probeServer() {
+    const host = (location.hostname || "").toLowerCase();
+    const sameLocal = location.protocol.startsWith("http") && (host === "127.0.0.1" || host === "localhost");
+    const origins = [];
+    if (sameLocal) origins.push("");
+    const alreadyDefault = sameLocal && String(location.port || "") === "8765";
+    if (!alreadyDefault) origins.push(DEFAULT_SERVER);
+    for (const origin of origins) {
+      try {
+        const r = await fetch(origin + "/api/health", { cache: "no-store" });
+        if (!r.ok) continue;
+        const j = await r.json();
+        if (j && j.ok) {
+          state.serverBase = origin;
+          setSaveModeText();
+          return true;
+        }
+      } catch (_) {}
+    }
+    state.serverBase = null;
+    setSaveModeText();
+    return false;
+  }
+
+  async function saveViaServer(arr) {
+    if (state.serverBase === null) return false;
+    const r = await fetch(state.serverBase + "/api/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file: currentHtmlName(), annotations: arr }),
+    });
+    const raw = await r.text().catch(() => "");
+    let parsed = null;
+    try { parsed = raw ? JSON.parse(raw) : null; } catch (_) {}
+    if (!r.ok) {
+      const detail = (parsed && parsed.error) ? parsed.error : raw;
+      throw new Error("写回服务失败 HTTP " + r.status + " · " + detail);
+    }
+    return parsed || true;
+  }
+
+  async function saveProgressToHtml() {
+    const { arr, payload } = annotationPayload();
+    const name = currentHtmlName();
+
+    if (state.serverBase !== null) {
+      try {
+        await saveViaServer(arr);
+        markDirty(false);
+        updateStats();
+        alert("已写回工作区原 HTML（含审核理由），无需另存为。\n文件：" + name);
+        return;
+      } catch (err) {
+        console.warn("server save failed", err);
+        alert(
+          "写回服务已连接，但保存失败，没有另存为。\n" +
+          (err && err.message ? err.message : String(err)) +
+          "\n请改用 http://127.0.0.1:8765/" + name
+        );
+        return;
+      }
+    }
+
+    const html = await htmlSourceForOfflineSave(payload);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    if (window.showSaveFilePicker) {
+      try {
+        if (!state.fileHandle) {
+          state.fileHandle = await window.showSaveFilePicker({
+            suggestedName: name,
+            types: [{ description: "HTML", accept: { "text/html": [".html"] } }],
+          });
+        }
+        const writable = await state.fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        markDirty(false);
+        updateStats();
+        alert("已把审核进度（含理由）写入 HTML。请用该文件覆盖工作区同名文件后，Cursor 刷新可见。");
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return;
+        console.warn("showSaveFilePicker failed, fallback download", err);
+        state.fileHandle = null;
+      }
+    }
+
+    downloadBlob(html, name, "text/html;charset=utf-8");
+    markDirty(false);
+    updateStats();
+    alert("已下载带进度的 HTML（含理由）。请用下载文件覆盖工作区同名文件后，Cursor 刷新可见。");
+  }
+
+  function exportJson() {
+    downloadBlob(JSON.stringify(annotationsArray(), null, 2), "audit_annotations.json", "application/json");
+  }
+
+  function exportCsv() {
+    const cols = ["audit_id","sample_class","pmid","gene","variant_text","link_tier","genomic_region","human_genomic_region","human_verdict","human_fail_stage","human_comment","updated_at"];
+    const lines = [cols.join(",")];
+    for (const row of annotationsArray()) {
+      lines.push(cols.map((c) => csvCell(row[c])).join(","));
+    }
+    downloadBlob(lines.join("\n"), "audit_annotations.csv", "text/csv");
+  }
+
+  function csvCell(v) {
+    const s = String(v ?? "");
+    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
+  // events
+  $("fileInput").addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    ingest(parseJsonl(await f.text()));
+  });
+  $("annInput").addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const arr = JSON.parse(await f.text());
+      const n = applyAnnotationList(arr);
+      markDirty(true);
+      applyFilter();
+      alert(`已导入 ${n} 条标注（记得点「保存进度」写入文件）。`);
+    } catch (err) {
+      alert("导入失败：不是合法 JSON 数组");
+    }
+  });
+  ["filterClass","filterTier","filterVerdict","filterRegion"].forEach((id) => {
+    if ($(id)) $(id).addEventListener("change", applyFilter);
+  });
+  $("filterQ").addEventListener("input", applyFilter);
+  $("btnZoomIn").addEventListener("click", () => setZoom(state.zoom + 0.1));
+  $("btnZoomOut").addEventListener("click", () => setZoom(state.zoom - 0.1));
+  $("btnZoomReset").addEventListener("click", () => setZoom(1));
+  $("btnPrev").addEventListener("click", () => selectIndex(state.idx - 1));
+  $("btnNext").addEventListener("click", () => selectIndex(state.idx + 1));
+  $("btnExportJson").addEventListener("click", exportJson);
+  $("btnExportCsv").addEventListener("click", exportCsv);
+  $("btnSaveHtml").addEventListener("click", () => { saveProgressToHtml(); });
+  $("btnSaveHtml2").addEventListener("click", () => { saveProgressToHtml(); });
+  document.querySelectorAll("button.verdict").forEach((b) => {
+    b.addEventListener("click", () => {
+      const rec = state.filtered[state.idx];
+      const extra = { human_verdict: b.dataset.v };
+      if (b.dataset.v === "pass" && rec) {
+        const prev = annFor(rec.audit_id);
+        if (!(prev.human_genomic_region || "").trim() && (rec.genomic_region || "").trim()) {
+          extra.human_genomic_region = rec.genomic_region;
+          if ($("humanRegion")) $("humanRegion").value = rec.genomic_region;
+        }
+      }
+      writeCurrent(extra);
+    });
+  });
+  $("btnClearVerdict").addEventListener("click", () => {
+    if (!confirm("确定清除本条的审核结果（pass/doubt/fail）、问题阶段、genomic_region 和理由？\n清除后需再点「保存进度」才会写入文件。")) return;
+    writeCurrent({ human_verdict: "", human_fail_stage: "", human_comment: "", human_genomic_region: "" });
+    $("failStage").value = "";
+    if ($("humanRegion")) $("humanRegion").value = "";
+    $("comment").value = "";
+  });
+  $("failStage").addEventListener("change", (e) => writeCurrent({ human_fail_stage: e.target.value }));
+  if ($("humanRegion")) {
+    $("humanRegion").addEventListener("change", (e) => writeCurrent({ human_genomic_region: e.target.value }));
+  }
+  $("comment").addEventListener("input", (e) => writeCurrent({ human_comment: e.target.value }, { render: false }));
+  $("comment").addEventListener("change", (e) => writeCurrent({ human_comment: e.target.value }, { render: false }));
+  $("comment").addEventListener("blur", (e) => writeCurrent({ human_comment: e.target.value }, { render: false }));
+
+  const main = $("main");
+  ["dragenter","dragover"].forEach((ev) => main.addEventListener(ev, (e) => {
+    e.preventDefault(); main.classList.add("drop-active");
+  }));
+  ["dragleave","drop"].forEach((ev) => main.addEventListener(ev, (e) => {
+    e.preventDefault(); main.classList.remove("drop-active");
+  }));
+  main.addEventListener("drop", async (e) => {
+    const f = e.dataTransfer?.files?.[0];
+    if (!f) return;
+    const name = (f.name || "").toLowerCase();
+    const text = await f.text();
+    if (name.endsWith(".json") && !name.endsWith(".jsonl")) {
+      try {
+        const arr = JSON.parse(text);
+        if (Array.isArray(arr) && arr[0] && arr[0].audit_id) {
+          applyAnnotationList(arr);
+          markDirty(true);
+          applyFilter();
+          return;
+        }
+      } catch (_) {}
+    }
+    ingest(parseJsonl(text));
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const inField = e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      saveProgressToHtml();
+      return;
+    }
+    if (inField) return;
+    if (e.key === "s" || e.key === "S") { e.preventDefault(); saveProgressToHtml(); }
+    else if (e.key === "1") writeCurrent({ human_verdict: "pass" });
+    else if (e.key === "2") writeCurrent({ human_verdict: "doubt" });
+    else if (e.key === "3") writeCurrent({ human_verdict: "fail" });
+    else if (e.key === "j" || e.key === "ArrowDown") { e.preventDefault(); selectIndex(state.idx + 1); }
+    else if (e.key === "k" || e.key === "ArrowUp") { e.preventDefault(); selectIndex(state.idx - 1); }
+    else if (e.key === "]") setZoom(state.zoom + 0.1);
+    else if (e.key === "[") setZoom(state.zoom - 0.1);
+  });
+
+  window.addEventListener("beforeunload", (e) => {
+    if (!state.dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
+  // boot: embedded annotations first (portable), then embedded audit rows
+  try {
+    const rawA = $("embedded-annotations").textContent.trim();
+    if (rawA && rawA !== "[]") applyAnnotationList(JSON.parse(rawA));
+  } catch (err) {
+    console.warn("embedded annotations parse failed", err);
+  }
+
+  let embedded = [];
+  try {
+    const raw = $("embedded-data").textContent.trim();
+    if (raw && raw !== "[]") embedded = JSON.parse(raw);
+  } catch (err) {
+    console.warn("embedded parse failed", err);
+  }
+
+  setZoom(1);
+  if (Array.isArray(embedded) && embedded.length) ingest(embedded);
+  markDirty(false);
+  updateStats();
+  setSaveModeText();
+  probeServer();
+})();
+</script>
+</body>
+</html>
